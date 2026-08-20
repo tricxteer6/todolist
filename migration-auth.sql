@@ -1,0 +1,11 @@
+USE taskflow;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE tasks ADD COLUMN user_id INT NULL AFTER id;
+ALTER TABLE tasks ADD INDEX idx_tasks_user_id (user_id);
