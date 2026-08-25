@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const taskRoutes = require('./backend/routes/taskRoutes');
+const reminderRoutes = require('./backend/routes/reminderRoutes');
 const authRoutes = require('./backend/routes/authRoutes');
 const { ensureDefaultUser } = require('./backend/services/authService');
 const pushRoutes = require('./backend/routes/pushRoutes');
@@ -17,6 +18,7 @@ app.use(express.static(path.join(__dirname, 'frontend')));
 
 app.get('/api/health', (_req, res) => res.json({ success: true, message: 'TaskFlow API is running' }));
 app.use('/api/tasks', taskRoutes);
+app.use('/api/reminders', reminderRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/push', pushRoutes);
 

@@ -17,15 +17,15 @@
   <nav class="navbar">
     <div class="nav-inner">
       <a class="brand" href="#top" aria-label="TaskFlow home"><span class="brand-mark">✦</span> taskflow<span class="brand-dot">.</span></a>
-      <div class="nav-links" id="navLinks"><a class="active" href="#dashboard">Dashboard</a><a href="#tasks">Tasks</a></div>
-      <span class="user-name" id="userName"></span><button class="logout-button" id="logoutBtn">Log out</button><button class="nav-cta" data-open-modal><span>＋</span> Add task</button>
+      <div class="nav-links" id="navLinks"><a class="active" href="#dashboard">Dashboard</a><a href="#tasks">Tasks</a><a href="#calendar">Calendar</a></div>
+      <div class="account-menu"><button class="account-trigger" id="accountMenuButton" aria-expanded="false" aria-controls="accountMenu"><span class="account-avatar">A</span><span class="account-name" id="accountName">Admin</span><span class="account-chevron">⌄</span></button><div class="account-dropdown" id="accountMenu" hidden><span class="account-dropdown-name" id="userName">Admin</span><button class="account-logout" id="logoutBtn">Log out</button></div></div>
       <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
     </div>
   </nav>
 
   <main id="top">
     <section class="hero" id="dashboard">
-      <div class="hero-copy"><p class="eyebrow"><span class="pulse"></span> Your personal workspace</p><h1>Make space for<br><em>great work.</em></h1><p class="hero-subtitle">Organize your work, stay focused, and get things done — one task at a time.</p><button class="button button-primary" data-open-modal>Add a new task <span>↗</span></button></div>
+      <div class="hero-copy"><p class="eyebrow"><span class="pulse"></span> Your personal workspace</p><h1>Make space for<br><em>great work.</em></h1><p class="hero-subtitle">Organize your work, stay focused, and get things done — one task at a time.</p></div>
       <div class="hero-art" aria-hidden="true"><div class="sun"></div><div class="art-card art-card-back"></div><div class="art-card art-card-main"><div class="art-top"><span>today’s focus</span><span class="mini-star">✦</span></div><div class="art-line line-long"></div><div class="art-line line-mid"></div><div class="art-check"><span>✓</span><div><b>Ship the landing page</b><small>in progress · due today</small></div></div><div class="art-check faded"><span>✓</span><div><b>Review project notes</b><small>completed yesterday</small></div></div></div><div class="float-badge">✦ <span>4 tasks<br><b>in focus</b></span></div></div>
     </section>
 
@@ -35,11 +35,36 @@
       <div class="toolbar"><label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search tasks..." /></label><label class="select-wrap"><span>Filter</span><select id="statusFilter"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option></select></label><label class="select-wrap"><span>Priority</span><select id="priorityFilter"><option value="all">All priorities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></label><label class="select-wrap sort-wrap"><span>Sort</span><select id="sortSelect"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="deadline">Deadline</option><option value="priority">Priority</option></select></label></div>
       <div id="loadingState" class="loading-state"><span class="spinner"></span> Loading your tasks...</div><div id="taskContent"></div>
     </section>
+
+    <section class="calendar-section" id="calendar">
+      <div class="section-heading calendar-heading">
+        <div>
+          <p class="eyebrow">Calendar view</p>
+          <h2>Reminder calendar <span id="calendarMonthLabel"></span></h2>
+        </div>
+        <div class="calendar-actions">
+          <button class="button button-quiet calendar-nav" id="calendarPrev">Prev</button>
+          <button class="button button-quiet calendar-nav" id="calendarToday">Today</button>
+          <button class="button button-quiet calendar-nav" id="calendarNext">Next</button>
+        </div>
+      </div>
+      <div class="calendar-grid-wrap">
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <aside class="calendar-side">
+          <div class="calendar-panel">
+            <p class="calendar-panel-label" id="calendarPanelLabel">This month</p>
+            <div class="heading-actions"><div><h3 id="calendarPanelTitle">Calendar items</h3><p class="calendar-panel-subtitle">Tasks and reminders stay separate.</p></div><button class="button button-primary calendar-add" id="openReminderModal"><span>＋</span> Add reminder</button></div>
+            <div id="calendarTaskList" class="calendar-task-list"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
   </main>
 
   <footer><div class="footer-inner"><a class="brand" href="#top"><span class="brand-mark">✦</span> taskflow<span class="brand-dot">.</span></a><span>Make today count.</span><span class="footer-copy">© 2026 TaskFlow</span></div></footer>
 
-  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close" id="closeModal" aria-label="Close">×</button><p class="eyebrow" id="modalKicker">Create something new</p><h2 id="modalTitle">Add a task</h2><p class="modal-subtitle">Keep it clear, keep it moving.</p><form id="taskForm"><input type="hidden" id="taskId" /><label>Task name<input id="taskName" name="task" placeholder="What needs to be done?" required minlength="3" maxlength="255" /></label><div class="form-row"><label>Date<input id="taskDateInput" name="date" type="date" required /></label><label>Deadline<input id="deadlineInput" name="deadline" type="datetime-local" required /></label></div><div class="form-row"><label>Priority<select id="priorityInput" name="priority" required><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label><label>Status<select id="statusInput" name="status" required><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option></select></label></div><div class="form-row reminder-row"><label>Remind me<input id="reminderValueInput" name="reminderValue" type="number" min="1" max="365" value="1" required /></label><label>Before deadline<select id="reminderUnitInput" name="reminderUnit" required><option value="minutes">Minutes before</option><option value="hours">Hours before</option><option value="days" selected>Days before</option></select></label></div><p class="form-hint">You’ll receive a push notification at this time, even if this tab is closed.</p><p class="form-error" id="formError"></p><div class="modal-actions"><button type="button" class="button button-quiet" id="cancelModal">Cancel</button><button type="submit" class="button button-dark" id="submitTask">Add task <span>↗</span></button></div></form></section></div>
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close" id="closeModal" aria-label="Close">×</button><p class="eyebrow" id="modalKicker">Create something new</p><h2 id="modalTitle">Add a task</h2><p class="modal-subtitle">Keep it clear, keep it moving.</p><form id="taskForm"><input type="hidden" id="taskId" /><label>Task name<input id="taskName" name="task" placeholder="What needs to be done?" required minlength="3" maxlength="255" /></label><div class="form-row"><label>Date<input id="taskDateInput" name="date" type="date" required /></label><label>Deadline<input id="deadlineInput" name="deadline" type="datetime-local" required /></label></div><div class="form-row"><label>Priority<select id="priorityInput" name="priority" required><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label><label>Status<select id="statusInput" name="status" required><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option></select></label></div><p class="form-hint">Tasks are separate from calendar reminders now.</p><p class="form-error" id="formError"></p><div class="modal-actions"><button type="button" class="button button-quiet" id="cancelModal">Cancel</button><button type="submit" class="button button-dark" id="submitTask">Add task <span>↗</span></button></div></form></section></div>
+  <div class="modal-backdrop" id="reminderModalBackdrop" aria-hidden="true"><section class="modal reminder-modal" role="dialog" aria-modal="true" aria-labelledby="reminderModalTitle"><button class="modal-close" id="closeReminderModal" aria-label="Close">×</button><p class="eyebrow">Calendar reminder</p><h2 id="reminderModalTitle">Add reminder</h2><p class="modal-subtitle">Set a reminder directly from the calendar. It will not create a task.</p><form id="reminderForm"><input type="hidden" id="reminderId" /><label>Reminder title<input id="reminderTitle" required minlength="3" maxlength="255" placeholder="e.g. Follow up with client" /></label><div class="form-row"><label>Remind at<input id="reminderAt" type="datetime-local" required /></label><label>Calendar day<input id="reminderDay" type="date" disabled /></label></div><label>Note<textarea id="reminderNote" rows="4" placeholder="Optional note for this reminder"></textarea></label><p class="form-error" id="reminderFormError"></p><div class="modal-actions"><button type="button" class="button button-quiet" id="cancelReminderModal">Cancel</button><button type="submit" class="button button-dark" id="submitReminder">Add reminder <span>↗</span></button></div></form></section></div>
   <div class="toast" id="toast"><span>✓</span><span id="toastMessage"></span></div>
 </body>
 </html>
