@@ -21,13 +21,9 @@ If the API/database is unavailable, the frontend automatically uses a small loca
 2. Put the public key, private key, and a contact email in `.env` as `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT`.
 3. Run TaskFlow over HTTPS in production. `localhost` is allowed by browsers for local development.
 4. Open the app, click **Enable alerts**, and allow browser notifications.
-5. Use **Test alert** to verify the subscription. When creating a task, the app calculates the reminder automatically from the deadline:
-   - more than 3 days away: reminder 3 days before
-   - 2-3 days away: reminder 2 days before
-   - 1-2 days away: reminder 1 day before
-   - less than 1 day away: reminder is sent immediately
+5. Use **Test alert** to verify the subscription. Task creation and editing never create an automatic reminder. Create a separate calendar reminder only when you want a notification.
 
-The main page also includes a calendar view for the current month, with task deadlines and reminder dates.
+The main page also includes a calendar view for the current month. A task deadline is a date only and each task appears only on that date. Calendar reminders remain separate and can include a reminder time.
 
 Push subscriptions are stored in `data/push-subscriptions.json`; keep that file private and back it up in production. Push notifications require the browser permission to remain enabled.
 

@@ -24,7 +24,7 @@ function jakartaDateString(date = new Date()) { const parts = new Intl.DateTimeF
 const todayISO = () => jakartaDateString();
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[char]));
 const formatDate = (date) => date ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${date}T00:00:00`)) : '—';
-const normalizeTask = (task) => ({ ...task, id: Number(task.id), date: String(task.date).slice(0, 10), deadline: String(task.deadline).replace(' ', 'T').slice(0, 16) });
+const normalizeTask = (task) => ({ ...task, id: Number(task.id), date: String(task.date).slice(0, 10), deadline: String(task.deadline).slice(0, 10) });
 const normalizeReminder = (reminder) => ({ ...reminder, id: Number(reminder.id), remind_at: String(reminder.remind_at).replace(' ', 'T').slice(0, 16) });
 const demoTasks = () => [
   { id: 1, date: todayISO(), task: 'Plan the week ahead', priority: 'high', deadline: `${todayISO()}T18:00`, status: 'in_progress', created_at: new Date().toISOString() },
@@ -34,7 +34,8 @@ const demoTasks = () => [
 function addDays(date, days) { const d = new Date(`${date}T12:00:00+07:00`); d.setUTCDate(d.getUTCDate() + days); return jakartaDateString(d); }
 function tomorrowISO() { return addDays(todayISO(), 1); }
 function deadlineDate(value) { const raw = String(value).replace(' ', 'T'); if (/[zZ]|[+-]\d\d:\d\d$/.test(raw)) return new Date(raw); return new Date(`${raw.length === 10 ? `${raw}T00:00:00` : raw}:00+07:00`); }
-function formatDeadline(value) { const date = deadlineDate(value); return new Intl.DateTimeFormat('en-US', { timeZone: JAKARTA_TIMEZONE, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date); }
+function formatTaskDeadline(value) { const date = deadlineDate(value); return new Intl.DateTimeFormat('en-US', { timeZone: JAKARTA_TIMEZONE, month: 'short', day: 'numeric', year: 'numeric' }).format(date); }
+function formatReminderTime(value) { const date = deadlineDate(value); return new Intl.DateTimeFormat('en-US', { timeZone: JAKARTA_TIMEZONE, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date); }
 async function request(url, options = {}) {
   const auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
@@ -86,12 +87,13 @@ function render() {
 function monthKey(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
 function sameMonth(dateA, dateB) { return dateA.getFullYear() === dateB.getFullYear() && dateA.getMonth() === dateB.getMonth(); }
 function monthTasks() {
-  return tasks.filter((task) => sameMonth(new Date(`${task.date}T12:00:00`), calendarMonth) || sameMonth(deadlineDate(task.deadline), calendarMonth));
+  return tasks.filter((task) => sameMonth(deadlineDate(task.deadline), calendarMonth));
 }
 function monthReminders() {
   return reminders.filter((reminder) => sameMonth(new Date(`${reminder.remind_at}T12:00:00`), calendarMonth));
 }
-function tasksForDay(dayISO) { return tasks.filter((task) => task.date === dayISO || String(task.deadline).slice(0, 10) === dayISO); }
+// A task is represented once in the calendar: on its deadline, never on its creation date.
+function tasksForDay(dayISO) { return tasks.filter((task) => String(task.deadline).slice(0, 10) === dayISO); }
 function remindersForDay(dayISO) { return reminders.filter((reminder) => String(reminder.remind_at).slice(0, 10) === dayISO); }
 function renderCalendar() {
   if (!els.calendarGrid || !els.calendarTaskList) return;
@@ -120,8 +122,8 @@ function renderCalendar() {
   if (els.calendarPanelLabel) els.calendarPanelLabel.textContent = agendaDate ? 'Selected day' : 'This month';
   if (els.calendarPanelTitle) els.calendarPanelTitle.textContent = agendaDate ? `Agenda ${formatDate(agendaDate)}` : 'Calendar items';
   const items = [
-    ...current.map((task) => `<article class="calendar-item"><div><strong>${escapeHtml(task.task)}</strong><p>Task deadline: ${formatDeadline(task.deadline)}</p></div><span>Task</span></article>`),
-    ...currentReminders.map((reminder) => `<article class="calendar-item reminder-item"><div class="calendar-item-copy"><div class="calendar-item-title"><span class="reminder-dot"></span><strong>${escapeHtml(reminder.title)}</strong></div><p>${formatDeadline(reminder.remind_at)}${reminder.note ? `<br>${escapeHtml(reminder.note)}` : ''}</p></div><div class="calendar-item-actions"><span class="reminder-label">Reminder</span><button class="calendar-action" data-edit-reminder="${reminder.id}" aria-label="Edit ${escapeHtml(reminder.title)}">Edit</button><button class="calendar-action delete" data-delete-reminder="${reminder.id}" aria-label="Delete ${escapeHtml(reminder.title)}">Delete</button></div></article>`)
+    ...current.map((task) => `<article class="calendar-item"><div><strong>${escapeHtml(task.task)}</strong><p>Task deadline: ${formatTaskDeadline(task.deadline)}</p></div><span>Task</span></article>`),
+    ...currentReminders.map((reminder) => `<article class="calendar-item reminder-item"><div class="calendar-item-copy"><div class="calendar-item-title"><span class="reminder-dot"></span><strong>${escapeHtml(reminder.title)}</strong></div><p>${formatReminderTime(reminder.remind_at)}${reminder.note ? `<br>${escapeHtml(reminder.note)}` : ''}</p></div><div class="calendar-item-actions"><span class="reminder-label">Reminder</span><button class="calendar-action" data-edit-reminder="${reminder.id}" aria-label="Edit ${escapeHtml(reminder.title)}">Edit</button><button class="calendar-action delete" data-delete-reminder="${reminder.id}" aria-label="Delete ${escapeHtml(reminder.title)}">Delete</button></div></article>`)
   ];
   els.calendarTaskList.innerHTML = items.length ? items.join('') : `<div class="calendar-empty">No tasks or reminders ${agendaDate ? 'on this day' : 'in this month'}.</div>`;
 }
@@ -140,21 +142,22 @@ function notifyUpcomingDeadlines() {
   if ('Notification' in window && Notification.permission === 'granted') new Notification('TaskFlow deadline reminder', { body: message });
 }
 function deadlineInfo(task) {
-  const remaining = deadlineDate(task.deadline).getTime() - Date.now();
-  if (task.status === 'completed') return { label: formatDeadline(task.deadline), className: '' };
-  if (remaining < 0) return { label: 'Overdue', className: 'deadline-overdue' };
-  if (remaining <= 2 * 86400000) return { label: `Due in ${formatRemaining(remaining)}`, className: 'deadline-soon' };
-  return { label: formatDeadline(task.deadline), className: '' };
+  const deadline = String(task.deadline).slice(0, 10);
+  const today = todayISO();
+  if (task.status === 'completed') return { label: formatTaskDeadline(task.deadline), className: '' };
+  if (deadline < today) return { label: 'Overdue', className: 'deadline-overdue' };
+  if (deadline === today) return { label: 'Due today', className: 'deadline-soon' };
+  if (deadline === addDays(today, 1)) return { label: 'Due tomorrow', className: 'deadline-soon' };
+  return { label: formatTaskDeadline(task.deadline), className: '' };
 }
-function formatRemaining(milliseconds) { const totalMinutes = Math.max(1, Math.floor(milliseconds / 60000)); const days = Math.floor(totalMinutes / 1440); const hours = Math.floor((totalMinutes % 1440) / 60); const minutes = totalMinutes % 60; return days ? `${days}d ${hours}h` : hours ? `${hours}h ${minutes}m` : `${minutes}m`; }
 function badges(task) { return `<span class="badge priority-${task.priority}">${task.priority}</span>`; }
 function statusBadge(task) { return `<span class="badge status-badge status-${task.status}">${task.status === 'in_progress' ? 'In progress' : task.status}</span>`; }
 function actions(task) { return `<div class="row-actions"><button class="icon-button" data-edit="${task.id}">Edit</button><button class="icon-button delete" data-delete="${task.id}">Delete</button></div>`; }
 function taskRow(task) { const due = deadlineInfo(task); return `<div class="task-row"><span class="date-text">${formatDate(task.date)}</span><span class="task-name ${task.status === 'completed' ? 'completed' : ''}">${escapeHtml(task.task)}</span><span>${badges(task)}</span><span class="deadline-text ${due.className}">${due.label}</span><span>${statusBadge(task)}</span>${actions(task)}</div>`; }
-function taskMobile(task) { const due = deadlineInfo(task); return `<article class="task-mobile-card"><div class="mobile-card-top"><span class="task-name ${task.status === 'completed' ? 'completed' : ''}">${escapeHtml(task.task)}</span>${badges(task)}</div><div class="mobile-card-meta"><span class="date-text">◷ ${formatDate(task.date)}</span><span class="deadline-text ${due.className}">⌁ ${due.label.startsWith('Due in') || due.label === 'Overdue' ? due.label : `Due ${due.label}`}</span></div><div class="mobile-card-bottom"><select class="badge status-badge status-${task.status}" data-status="${task.id}" aria-label="Change status"><option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option><option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>In progress</option><option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option></select>${actions(task)}</div></article>`; }
+function taskMobile(task) { const due = deadlineInfo(task); return `<article class="task-mobile-card"><div class="mobile-card-top"><span class="task-name ${task.status === 'completed' ? 'completed' : ''}">${escapeHtml(task.task)}</span>${badges(task)}</div><div class="mobile-card-meta"><span class="date-text">◷ ${formatDate(task.date)}</span><span class="deadline-text ${due.className}">⌁ ${due.label.startsWith('Due') || due.label === 'Overdue' ? due.label : `Due ${due.label}`}</span></div><div class="mobile-card-bottom"><select class="badge status-badge status-${task.status}" data-status="${task.id}" aria-label="Change status"><option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option><option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>In progress</option><option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option></select>${actions(task)}</div></article>`; }
 
 function openModal(task = null) {
-  els.form.reset(); els.error.textContent = ''; els.id.value = task?.id || ''; els.date.value = task?.date || todayISO(); els.deadline.value = task?.deadline || `${todayISO()}T17:00`; els.priorityInput.value = task?.priority || 'medium'; els.statusInput.value = task?.status || 'pending'; els.name.value = task?.task || '';
+  els.form.reset(); els.error.textContent = ''; els.id.value = task?.id || ''; els.date.value = task?.date || todayISO(); els.deadline.value = task?.deadline || todayISO(); els.priorityInput.value = task?.priority || 'medium'; els.statusInput.value = task?.status || 'pending'; els.name.value = task?.task || '';
   $('#modalKicker').textContent = task ? 'Make it better' : 'Create something new'; $('#modalTitle').textContent = task ? 'Edit task' : 'Add a task'; $('#submitTask').innerHTML = task ? 'Save changes <span>↗</span>' : 'Add task <span>↗</span>';
   els.modal.classList.add('open'); els.modal.setAttribute('aria-hidden', 'false'); setTimeout(() => els.name.focus(), 50);
 }

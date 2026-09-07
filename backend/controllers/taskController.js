@@ -2,12 +2,8 @@ const pool = require('../config/database');
 const allowedPriorities = ['low', 'medium', 'high'];
 const allowedStatuses = ['pending', 'in_progress', 'completed'];
 
-function mysqlDateTime(value) {
-  return String(value || '').replace('T', ' ') + (String(value || '').length === 16 ? ':00' : '');
-}
-
 function normalizeDeadlineValue(value) {
-  return mysqlDateTime(value).slice(0, 16);
+  return String(value || '').slice(0, 10);
 }
 
 function validateTask(body) {
