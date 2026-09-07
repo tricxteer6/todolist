@@ -24,7 +24,8 @@ function jakartaDateString(date = new Date()) { const parts = new Intl.DateTimeF
 const todayISO = () => jakartaDateString();
 const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[char]));
 const formatDate = (date) => date ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${date}T00:00:00`)) : '—';
-const normalizeTask = (task) => ({ ...task, id: Number(task.id), date: String(task.date).slice(0, 10), deadline: String(task.deadline).slice(0, 10) });
+const toISODate = (value) => String(value ?? '').match(/^\d{4}-\d{2}-\d{2}/)?.[0] || '';
+const normalizeTask = (task) => ({ ...task, id: Number(task.id), date: toISODate(task.date), deadline: toISODate(task.deadline) });
 const normalizeReminder = (reminder) => ({ ...reminder, id: Number(reminder.id), remind_at: String(reminder.remind_at).replace(' ', 'T').slice(0, 16) });
 const demoTasks = () => [
   { id: 1, date: todayISO(), task: 'Plan the week ahead', priority: 'high', deadline: `${todayISO()}T18:00`, status: 'in_progress', created_at: new Date().toISOString() },
@@ -34,7 +35,7 @@ const demoTasks = () => [
 function addDays(date, days) { const d = new Date(`${date}T12:00:00+07:00`); d.setUTCDate(d.getUTCDate() + days); return jakartaDateString(d); }
 function tomorrowISO() { return addDays(todayISO(), 1); }
 function deadlineDate(value) { const raw = String(value).replace(' ', 'T'); if (/[zZ]|[+-]\d\d:\d\d$/.test(raw)) return new Date(raw); return new Date(`${raw.length === 10 ? `${raw}T00:00:00` : raw}:00+07:00`); }
-function formatTaskDeadline(value) { const date = deadlineDate(value); return new Intl.DateTimeFormat('en-US', { timeZone: JAKARTA_TIMEZONE, month: 'short', day: 'numeric', year: 'numeric' }).format(date); }
+function formatTaskDeadline(value) { const date = deadlineDate(value); return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('en-US', { timeZone: JAKARTA_TIMEZONE, month: 'short', day: 'numeric', year: 'numeric' }).format(date); }
 function formatReminderTime(value) { const date = deadlineDate(value); return new Intl.DateTimeFormat('en-US', { timeZone: JAKARTA_TIMEZONE, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date); }
 async function request(url, options = {}) {
   const auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
@@ -144,6 +145,7 @@ function notifyUpcomingDeadlines() {
 function deadlineInfo(task) {
   const deadline = String(task.deadline).slice(0, 10);
   const today = todayISO();
+  if (!toISODate(deadline)) return { label: 'No deadline', className: 'deadline-overdue' };
   if (task.status === 'completed') return { label: formatTaskDeadline(task.deadline), className: '' };
   if (deadline < today) return { label: 'Overdue', className: 'deadline-overdue' };
   if (deadline === today) return { label: 'Due today', className: 'deadline-soon' };
